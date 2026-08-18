@@ -29,25 +29,28 @@ try {
 }
 
 // 2. Fetch Universe
-async function fetchUniverse() {
+export async function fetchUniverse() {
   try {
     const res = await axios.get('https://api.kite.trade/instruments', { timeout: 8000 });
     const records = parse(res.data, { columns: true, skip_empty_lines: true });
-    return records
-      .filter(r => r.segment === 'NSE' && r.instrument_type === 'EQ' && r.name && !r.name.includes('-'))
-      .map(r => r.tradingsymbol)
-      .slice(0, 200);
-  } catch {
-    return [
-      'EMMVEE', 'GLENMARK', 'DIXON', 'BEL', 'TRENT', 'HAL', 'POLYCAB', 'PERSISTENT',
-      'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'BHARTIARTL', 'SBIN',
-      'LT', 'TATAMOTORS', 'SUNPHARMA', 'TITAN', 'BAJFINANCE', 'ADANIENT',
-      'NTPC', 'POWERGRID', 'ONGC', 'COALINDIA', 'TATASTEEL', 'JSWSTEEL',
-      'HINDALCO', 'VEDL', 'BHEL', 'RECLTD', 'PFC', 'IRFC', 'RVNL',
-      'MAZDOCK', 'COCHINSHIP', 'SUZLON', 'TATAPOWER', 'KPITTECH', 'COFORGE',
-      'MAXHEALTH', 'APOLLOHOSP', 'ZYDUSLIFE', 'LUPIN', 'AUROPHARMA', 'FEDERALBNK',
-      'IDFCFIRSTB', 'ASHOKLEY', 'BOSCHLTD', 'CUMMINSIND', '5PAISA', 'AAKASH', 'CARBORUNIV'
-    ];
+
+    // 1. Get all unique underlying tickers that have active F&O derivatives (NFO segment)
+    const fnoTickers = new Set(
+      records
+        .filter(r => r.segment === 'NFO-FUT')
+        .map(r => r.name)
+        .filter(Boolean)
+    );
+
+    // 2. Match with NSE Cash equities
+    const liquidUniverse = records
+      .filter(r => r.segment === 'NSE' && r.instrument_type === 'EQ' && fnoTickers.has(r.tradingsymbol))
+      .map(r => r.tradingsymbol);
+
+    // Returns ~180 highest-volume institutional stocks (BEL, HAL, TRENT, DIXON, BHEL, etc.)
+    return Array.from(new Set(liquidUniverse));
+  } catch (err) {
+    return FALLBACK_UNIVERSE;
   }
 }
 
