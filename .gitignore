@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables & secrets
+.env
+*.env
+serviceAccountKey.json
+*/serviceAccountKey.json
+
+# Build outputs
+dist/
+build/
+*/dist/
+
+# Firebase local caches
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
